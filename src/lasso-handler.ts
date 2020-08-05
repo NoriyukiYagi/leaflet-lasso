@@ -36,6 +36,9 @@ export class LassoHandler extends L.Handler {
 
     private onDocumentMouseMoveBound = this.onDocumentMouseMove.bind(this);
     private onDocumentMouseUpBound = this.onDocumentMouseUp.bind(this);
+    private onDocumentTouchStartBound = this.onDocumentTouchStart.bind(this);
+    private onDocumentTouchMoveBound = this.onDocumentTouchMove.bind(this);
+    private onDocumentTouchEndBound = this.onDocumentTouchEnd.bind(this);
 
     constructor(map: L.Map, options: LassoHandlerOptions = {}) {
         super(map);
@@ -59,7 +62,8 @@ export class LassoHandler extends L.Handler {
     addHooks() {
         this.map.getPane('mapPane');
         this.map.on('mousedown', this.onMapMouseDown, this);
-        
+        document.addEventListener('touchstart', this.onDocumentTouchStartBound);
+
         const mapContainer = this.map.getContainer();
         mapContainer.classList.add(ACTIVE_CLASS);
 
@@ -76,6 +80,9 @@ export class LassoHandler extends L.Handler {
         this.map.off('mousedown', this.onMapMouseDown, this);
         document.removeEventListener('mousemove', this.onDocumentMouseMoveBound);
         document.removeEventListener('mouseup', this.onDocumentMouseUpBound);
+        document.removeEventListener('touchstart', this.onDocumentTouchStartBound);
+        document.removeEventListener('touchmove', this.onDocumentTouchMoveBound);
+        document.removeEventListener('touchend', this.onDocumentTouchEndBound);
 
         this.map.getContainer().classList.remove(ACTIVE_CLASS);
         document.body.classList.remove(ACTIVE_CLASS);
@@ -125,6 +132,59 @@ export class LassoHandler extends L.Handler {
 
     private onDocumentMouseUp() {
         this.finish();
+    }
+
+    private onDocumentTouchStart(event: TouchEvent) {
+        if (event.touches.length !== 1) {
+            this.disable();
+            return;
+        }
+        event.target?.dispatchEvent(this.convertTouchEventToMouseEvent(event, 'mousedown'));
+
+        document.addEventListener('touchmove', this.onDocumentTouchMoveBound);
+        document.addEventListener('touchend', this.onDocumentTouchEndBound);
+    }
+
+    private onDocumentTouchMove(event: TouchEvent) {
+        if (event.touches.length !== 1) {
+            this.finish();
+            return;
+        }
+        event.target?.dispatchEvent(this.convertTouchEventToMouseEvent(event, 'mousemove'));
+    }
+
+    private onDocumentTouchEnd(event: TouchEvent) {
+        if (event.touches.length !== 1) {
+            this.finish();
+            return;
+        }
+        event.target?.dispatchEvent(this.convertTouchEventToMouseEvent(event, 'mouseup'));
+    }
+    
+    private convertTouchEventToMouseEvent(event: TouchEvent, mouseEventType: string): MouseEvent {
+        const touches = event.changedTouches;
+        const touch = touches[0];
+        const mouseEvent = new MouseEvent(
+            mouseEventType,
+            {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                detail: 1,
+                screenX: touch.screenX,
+                screenY: touch.screenY,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                ctrlKey: false,
+                altKey: false, 
+                shiftKey: false,
+                metaKey: false,
+                button: 0,
+                relatedTarget: null,
+                buttons: 1,
+            }
+        );
+        return mouseEvent;
     }
 
     private finish() {
