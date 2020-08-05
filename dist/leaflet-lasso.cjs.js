@@ -256,6 +256,10 @@ var LassoHandler = /** @class */ (function (_super) {
     };
     LassoHandler.prototype.onMapMouseDown = function (event) {
         var event2 = event;
+        // ignore leaflet simulated event
+        if (event2.originalEvent.buttons === 0) {
+            return;
+        }
         // activate lasso only for left mouse button click
         if (event2.originalEvent.buttons !== 1) {
             this.disable();
@@ -275,6 +279,10 @@ var LassoHandler = /** @class */ (function (_super) {
             return;
         }
         var event2 = event;
+        // ignore leaflet simulated event
+        if (event2.buttons === 0) {
+            return;
+        }
         // keep lasso active only if left mouse button is hold
         if (event2.buttons !== 1) {
             console.warn('mouseup event was missed');
@@ -304,13 +312,8 @@ var LassoHandler = /** @class */ (function (_super) {
         }
         (_a = event.target) === null || _a === void 0 ? void 0 : _a.dispatchEvent(this.convertTouchEventToMouseEvent(event, 'mousemove'));
     };
-    LassoHandler.prototype.onDocumentTouchEnd = function (event) {
-        var _a;
-        if (event.touches.length !== 1) {
-            this.finish();
-            return;
-        }
-        (_a = event.target) === null || _a === void 0 ? void 0 : _a.dispatchEvent(this.convertTouchEventToMouseEvent(event, 'mouseup'));
+    LassoHandler.prototype.onDocumentTouchEnd = function () {
+        this.finish();
     };
     LassoHandler.prototype.convertTouchEventToMouseEvent = function (event, mouseEventType) {
         var touches = event.changedTouches;
