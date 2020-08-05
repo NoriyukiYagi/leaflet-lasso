@@ -94,6 +94,11 @@ export class LassoHandler extends L.Handler {
     private onMapMouseDown(event: L.LeafletEvent) {
         const event2 = event as L.LeafletMouseEvent;
 
+        // ignore leaflet simulated event
+        if (event2.originalEvent.buttons === 0) {
+            return;
+        }
+
         // activate lasso only for left mouse button click
         if (event2.originalEvent.buttons !== 1) {
             this.disable();
@@ -119,6 +124,11 @@ export class LassoHandler extends L.Handler {
         }
 
         const event2 = event as MouseEvent;
+
+        // ignore leaflet simulated event
+        if (event2.buttons === 0) {
+            return;
+        }
 
         // keep lasso active only if left mouse button is hold
         if (event2.buttons !== 1) {
@@ -153,12 +163,8 @@ export class LassoHandler extends L.Handler {
         event.target?.dispatchEvent(this.convertTouchEventToMouseEvent(event, 'mousemove'));
     }
 
-    private onDocumentTouchEnd(event: TouchEvent) {
-        if (event.touches.length !== 1) {
-            this.finish();
-            return;
-        }
-        event.target?.dispatchEvent(this.convertTouchEventToMouseEvent(event, 'mouseup'));
+    private onDocumentTouchEnd() {
+        this.finish();
     }
     
     private convertTouchEventToMouseEvent(event: TouchEvent, mouseEventType: string): MouseEvent {
